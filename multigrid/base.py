@@ -708,52 +708,66 @@ class MultiGridEnv(gym.Env, RandomMixin, ABC):
         """
         Render a non-partial observation for visualization.
         """
-        # Compute agent visibility masks
         obs_shape = self.agents[0].observation_space['image'].shape[:-1]
-        vis_masks = np.zeros((self.num_agents, *obs_shape), dtype=bool)
-        for i, agent_obs in self.gen_obs().items():
-            vis_masks[i] = (agent_obs['image'][..., 0] != Type.unseen.to_index())
-
-        # Mask of which cells to highlight
-        highlight_mask = np.zeros((self.width, self.height), dtype=bool)
-
-        for agent in self.agents:
-            # Compute the world coordinates of the bottom-left corner
-            # of the agent's view area
-            f_vec = agent.state.dir.to_vec()
-            r_vec = np.array((-f_vec[1], f_vec[0]))
-            top_left = (
-                agent.state.pos
-                + f_vec * (agent.view_size - 1)
-                - r_vec * (agent.view_size // 2)
+        # If obs_shape and the agent observation space from self.gen_obs() do not match then the environment must be
+        # wrapped in a fully observable wrapper and agent visibility masks do not need to be rendered.
+        # This is a fix for the fact that wrapping an environment in a wrapper that implements observation does not
+        # change the behavior of the gen_obs function used for rendering.
+        if self.gen_obs()[0]['image'].shape[:-1] != obs_shape:
+            print("gen_obs and agent observation space dimensions do not match, rendering environment as fully "
+                  "observable (without highlighting)")
+            # Render the whole grid
+            img = self.grid.render(
+                tile_size,
+                agents=self.agents,
+                highlight_mask=None
             )
+            return img
+        else:
+            # Compute agent visibility masks
+            vis_masks = np.zeros((self.num_agents, *obs_shape), dtype=bool)
+            for i, agent_obs in self.gen_obs().items():
+                vis_masks[i] = (agent_obs['image'][..., 0] != Type.unseen.to_index())
 
-            # For each cell in the visibility mask
-            for vis_j in range(0, agent.view_size):
-                for vis_i in range(0, agent.view_size):
-                    # If this cell is not visible, don't highlight it
-                    if not vis_masks[agent.index][vis_i, vis_j]:
-                        continue
+            # Mask of which cells to highlight
+            highlight_mask = np.zeros((self.width, self.height), dtype=bool)
 
-                    # Compute the world coordinates of this cell
-                    abs_i, abs_j = top_left - (f_vec * vis_j) + (r_vec * vis_i)
+            for agent in self.agents:
+                # Compute the world coordinates of the bottom-left corner
+                # of the agent's view area
+                f_vec = agent.state.dir.to_vec()
+                r_vec = np.array((-f_vec[1], f_vec[0]))
+                top_left = (
+                    agent.state.pos
+                    + f_vec * (agent.view_size - 1)
+                    - r_vec * (agent.view_size // 2)
+                )
 
-                    if abs_i < 0 or abs_i >= self.width:
-                        continue
-                    if abs_j < 0 or abs_j >= self.height:
-                        continue
+                # For each cell in the visibility mask
+                for vis_j in range(0, agent.view_size):
+                    for vis_i in range(0, agent.view_size):
+                        # If this cell is not visible, don't highlight it
+                        if not vis_masks[agent.index][vis_i, vis_j]:
+                            continue
 
-                    # Mark this cell to be highlighted
-                    highlight_mask[abs_i, abs_j] = True
+                        # Compute the world coordinates of this cell
+                        abs_i, abs_j = top_left - (f_vec * vis_j) + (r_vec * vis_i)
 
-        # Render the whole grid
-        img = self.grid.render(
-            tile_size,
-            agents=self.agents,
-            highlight_mask=highlight_mask if highlight else None,
-        )
+                        if abs_i < 0 or abs_i >= self.width:
+                            continue
+                        if abs_j < 0 or abs_j >= self.height:
+                            continue
 
-        return img
+                        # Mark this cell to be highlighted
+                        highlight_mask[abs_i, abs_j] = True
+
+            # Render the whole grid
+            img = self.grid.render(
+                tile_size,
+                agents=self.agents,
+                highlight_mask=highlight_mask if highlight else None,
+            )
+            return img
 
     def get_frame(
         self,

@@ -151,7 +151,6 @@ def gen_obs_grid(
     """
     num_agents = len(agent_state)
     obs_width, obs_height = agent_view_size, agent_view_size
-
     # Process agent states
     agent_grid_encoding = agent_state[..., AGENT_ENCODING_IDX]
     agent_dir = agent_state[..., AGENT_DIR_IDX]

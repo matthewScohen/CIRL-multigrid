@@ -5,7 +5,7 @@ import numba as nb
 import numpy as np
 
 from gymnasium import spaces
-from gymnasium.core import ObservationWrapper
+from gymnasium.core import ObservationWrapper, RenderFrame
 from numpy.typing import NDArray as ndarray
 
 from .base import MultiGridEnv, AgentID, ObsType

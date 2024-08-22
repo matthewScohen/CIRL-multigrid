@@ -42,6 +42,7 @@ CONFIGURATIONS = {
     'MultiGrid-Empty-6x6-v0': (EmptyEnv, {'size': 6}),
     'MultiGrid-Empty-Random-6x6-v0': (EmptyEnv, {'size': 6, 'agent_start_pos': None}),
     'MultiGrid-Empty-8x8-v0': (EmptyEnv, {}),
+    'MultiGrid-Empty-Random-8x8-v0': (EmptyEnv, {'agent_start_pos': None}),
     'MultiGrid-Empty-16x16-v0': (EmptyEnv, {'size': 16}),
     'MultiGrid-LockedHallway-2Rooms-v0': (LockedHallwayEnv, {'num_rooms': 2}),
     'MultiGrid-LockedHallway-4Rooms-v0': (LockedHallwayEnv, {'num_rooms': 4}),
